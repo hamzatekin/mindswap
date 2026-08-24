@@ -48,7 +48,9 @@ export function Inbox() {
               </span>
             </div>
             <p className={`mt-2 text-sm whitespace-pre-wrap ${item.status === "done" ? "line-through opacity-60" : ""}`}>
-              {item.body}
+              {item.type === "import" && item.body.length > 400
+                ? `${item.body.slice(0, 400)}… [${item.body.split("\n").length} lines queued]`
+                : item.body}
             </p>
             {item.url && (
               <a href={item.url} target="_blank" rel="noreferrer" className="text-primary mt-1 block truncate text-xs underline">

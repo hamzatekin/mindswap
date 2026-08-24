@@ -60,17 +60,20 @@ interface ClaudeResult {
   json: Record<string, unknown> | null
 }
 
-async function runClaude(prompt: string): Promise<ClaudeResult> {
+async function runClaude(
+  prompt: string,
+  opts: { maxTurns?: number; timeoutMs?: number } = {},
+): Promise<ClaudeResult> {
   const { stdout } = await exec(
     "claude",
     [
       "-p",
       "--output-format", "json",
       "--allowedTools", "Read,Write,Edit,Glob,Grep",
-      "--max-turns", "40",
+      "--max-turns", String(opts.maxTurns ?? 40),
       prompt,
     ],
-    { cwd: brainDir, timeout: 15 * 60 * 1000, maxBuffer: 32 * 1024 * 1024 },
+    { cwd: brainDir, timeout: opts.timeoutMs ?? 15 * 60 * 1000, maxBuffer: 32 * 1024 * 1024 },
   )
   const parsed: unknown = JSON.parse(stdout)
   if (typeof parsed !== "object" || parsed === null || !("result" in parsed)) {
@@ -99,7 +102,19 @@ function loadPrompt(name: string, vars: Record<string, string>): string {
   return text
 }
 
+async function processImportChunk(item: Item): Promise<void> {
+  log(`processing import chunk #${item.id} (${item.body.length} chars)`)
+  const prompt = loadPrompt("import.md", { CHUNK: item.body })
+  const { text, json } = await runClaude(prompt, { maxTurns: 100, timeoutMs: 30 * 60 * 1000 })
+  const insight = typeof json?.insight === "string" && json.insight.trim() !== "" ? json.insight : text
+  updateItem(item.id, { status: "archived" })
+  insertInsight({ itemId: item.id, kind: "import", body: insight })
+  await commitBrain(`import chunk #${item.id}`)
+  log(`import chunk #${item.id} filed`)
+}
+
 async function processItem(item: Item): Promise<void> {
+  if (item.type === "import") return processImportChunk(item)
   log(`processing item #${item.id}`)
   const prompt = loadPrompt("on-item.md", { ITEM_JSON: JSON.stringify(item, null, 2) })
   const { text, json } = await runClaude(prompt)

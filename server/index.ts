@@ -2,8 +2,10 @@ import { serve } from "@hono/node-server"
 import { serveStatic } from "@hono/node-server/serve-static"
 import { createHash, timingSafeEqual } from "node:crypto"
 import fs from "node:fs"
+import path from "node:path"
 import { Hono } from "hono"
-import { env } from "./env.ts"
+import { brainDir, env } from "./env.ts"
+import { chunkOutline } from "./import.ts"
 import {
   getItem,
   insertItem,
@@ -78,6 +80,55 @@ app.post("/api/digest", (c) => {
 })
 
 app.get("/api/types", (c) => c.json(ITEM_TYPES))
+
+app.post("/api/import", async (c) => {
+  const text = await c.req.text()
+  if (text.trim() === "") return c.json({ error: "empty body" }, 400)
+
+  const date = new Date().toISOString().slice(0, 10)
+  const importsDir = path.join(brainDir, "imports")
+  fs.mkdirSync(importsDir, { recursive: true })
+  let name = `workflowy-${date}.md`
+  for (let n = 2; fs.existsSync(path.join(importsDir, name)); n++) {
+    name = `workflowy-${date}-${n}.md`
+  }
+  fs.writeFileSync(path.join(importsDir, name), text)
+
+  const chunks = chunkOutline(text)
+  for (const chunk of chunks) insertItem({ body: chunk, url: null, type: "import" })
+  return c.json({ savedTo: `imports/${name}`, chunks: chunks.length }, 201)
+})
+
+interface BrainFile {
+  path: string
+  size: number
+}
+
+app.get("/api/brain", (c) => {
+  const files: BrainFile[] = []
+  const walk = (dir: string, rel: string): void => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name.startsWith(".")) continue
+      const relPath = rel === "" ? entry.name : `${rel}/${entry.name}`
+      if (entry.isDirectory()) walk(path.join(dir, entry.name), relPath)
+      else if (entry.name.endsWith(".md")) {
+        files.push({ path: relPath, size: fs.statSync(path.join(dir, entry.name)).size })
+      }
+    }
+  }
+  walk(brainDir, "")
+  return c.json(files.sort((a, b) => a.path.localeCompare(b.path)))
+})
+
+app.get("/api/brain/file", (c) => {
+  const rel = c.req.query("path") ?? ""
+  const abs = path.resolve(brainDir, rel)
+  if (!rel.endsWith(".md") || !abs.startsWith(path.resolve(brainDir) + path.sep)) {
+    return c.json({ error: "bad path" }, 400)
+  }
+  if (!fs.existsSync(abs)) return c.json({ error: "not found" }, 404)
+  return c.json({ path: rel, content: fs.readFileSync(abs, "utf8") })
+})
 
 if (fs.existsSync("./dist")) {
   app.use("/*", serveStatic({ root: "./dist" }))

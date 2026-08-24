@@ -35,6 +35,20 @@ npm run dev          # Vite on :5173, proxies /api → :8787. Token is "dev".
 See [deploy.md](deploy.md) — plain Docker Compose + Caddy on a VPS: clone, fill `.env`
 (two secrets), `docker compose up -d --build`, one Caddy block for HTTPS.
 
+## Import from Workflowy
+
+Export from Workflowy (plain text or markdown — both are indented outlines), then:
+
+```sh
+curl -s https://mindswap.yourdomain.com/api/import \
+  -H "Authorization: Bearer $BRAIN_TOKEN" --data-binary @workflowy.txt
+```
+
+The raw export is archived verbatim in `brain/imports/`, split into section-sized
+chunks, and the agent files each chunk into the brain (tasks, lists, projects,
+notes) one at a time — watch progress in the insights feed, browse the result in
+the Brain tab.
+
 ## Config (env)
 
 | var | default | |

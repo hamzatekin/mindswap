@@ -13,7 +13,7 @@ export type ItemStatus = "new" | "processed" | "done" | "archived" | "error"
 
 export interface Item {
   id: number
-  type: ItemType | "auto"
+  type: ItemType | "auto" | "import"
   body: string
   url: string | null
   tags: string[]

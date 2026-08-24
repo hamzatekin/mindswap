@@ -1,11 +1,12 @@
 import { useState } from "react"
+import { Brain } from "@/screens/Brain"
 import { Capture } from "@/screens/Capture"
 import { Inbox } from "@/screens/Inbox"
 import { Insights } from "@/screens/Insights"
 import { TokenGate } from "@/screens/TokenGate"
 import { getToken } from "@/lib/api"
 
-type Tab = "capture" | "inbox" | "insights"
+type Tab = "capture" | "inbox" | "insights" | "brain"
 
 function readShareText(): string {
   if (window.location.pathname !== "/share") return ""
@@ -34,9 +35,10 @@ export default function App() {
         {tab === "capture" && <Capture initialBody={shared} />}
         {tab === "inbox" && <Inbox />}
         {tab === "insights" && <Insights />}
+        {tab === "brain" && <Brain />}
       </main>
       <nav className="border-border bg-background sticky bottom-0 flex border-t pb-[env(safe-area-inset-bottom)]">
-        {(["capture", "inbox", "insights"] as const).map((t) => (
+        {(["capture", "inbox", "insights", "brain"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
