@@ -4,10 +4,13 @@
 set -e
 cd "$(dirname "$0")/.."
 git fetch origin main
-if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+target=$(git rev-parse origin/main)
+marker=.git/last-deploy
+if [ -f "$marker" ] && [ "$(cat "$marker")" = "$target" ]; then
   exit 0
 fi
 echo "[deploy] $(date -u +%FT%TZ) deploying $(git rev-parse --short origin/main)"
 git merge --ff-only origin/main
 docker compose up -d --build
+echo "$target" > "$marker"
 echo "[deploy] $(date -u +%FT%TZ) done"
