@@ -34,7 +34,6 @@ npm run dev          # Vite on :5173, proxies /api → :8787. Token is "dev".
 
 See [deploy.md](deploy.md) — plain Docker Compose + Caddy on a VPS: clone, fill `.env`
 (two secrets), `docker compose up -d --build`, one Caddy block for HTTPS.
-volume at `/data`.
 
 ## Config (env)
 
