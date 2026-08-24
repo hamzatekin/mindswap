@@ -145,6 +145,11 @@ export function recentItemsSince(days: number): Item[] {
   return rows.map(toItem)
 }
 
+export function hasItemsSince(iso: string): boolean {
+  const row = db.prepare("SELECT 1 FROM items WHERE created_at >= ? LIMIT 1").get(iso)
+  return row !== undefined
+}
+
 export function getMeta(key: string): string | null {
   const row = db.prepare("SELECT value FROM meta WHERE key = ?").get(key) as Row | undefined
   return row ? str(row, "value") : null

@@ -5,6 +5,7 @@ import { promisify } from "node:util"
 import { brainDir, env } from "./env.ts"
 import {
   getMeta,
+  hasItemsSince,
   insertInsight,
   nextNewItem,
   recentItemsSince,
@@ -146,6 +147,12 @@ async function tick(): Promise<void> {
   const today = new Date().toISOString().slice(0, 10)
   if (new Date().getUTCHours() >= env.digestHour && getMeta("last_digest") !== today) {
     setMeta("last_digest", today)
+    const since = getMeta("last_digest_at") ?? "1970-01-01T00:00:00Z"
+    if (!hasItemsSince(since)) {
+      log("digest skipped (no new items since last digest)")
+      return
+    }
+    setMeta("last_digest_at", `${new Date().toISOString().slice(0, 19)}Z`)
     try {
       await runDigest()
     } catch (error) {
