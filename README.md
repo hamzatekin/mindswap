@@ -32,8 +32,8 @@ npm run dev          # Vite on :5173, proxies /api → :8787. Token is "dev".
 
 ## Deploy
 
-See [deploy.md](deploy.md) — Dockerfile for Coolify, two env secrets
-(`BRAIN_TOKEN` for app access, `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`),
+See [deploy.md](deploy.md) — plain Docker Compose + Caddy on a VPS: clone, fill `.env`
+(two secrets), `docker compose up -d --build`, one Caddy block for HTTPS.
 volume at `/data`.
 
 ## Config (env)

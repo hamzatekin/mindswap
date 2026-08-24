@@ -1,0 +1,4 @@
+# Add to your host Caddyfile (or drop in /etc/caddy/conf.d/ if you import that dir)
+mindswap.yourdomain.com {
+	reverse_proxy 127.0.0.1:8787
+}
